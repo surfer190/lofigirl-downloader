@@ -50,6 +50,7 @@ print(Style.RESET_ALL)
 num_releases = len(releases_links)
 
 for selected_release in range(1, num_releases + 1):
+    print("#", selected_release)
     # get html file of user selected release
     resp = http.request("GET", releases_links[int(selected_release) - 1])
     soup = BeautifulSoup(resp.data, "html.parser")
@@ -79,11 +80,20 @@ for selected_release in range(1, num_releases + 1):
                 "div", class_="cv_custom_custom_content_description"
             ).h4.string.strip()[3:]
         )
-        sound_file_artist.append(
-            link.find(
-                "div", class_="cv_custom_custom_content_description"
-            ).p.string.strip()
-        )
+        try:
+            sound_file_artist.append(
+                link.find(
+                    "div", class_="cv_custom_custom_content_description"
+                ).p.string.strip()
+            )
+        except AttributeError as error:
+            print(error)
+            print("Using h4 tag")
+            sound_file_artist.append(
+                link.find(
+                    "div", class_="cv_custom_custom_content_description"
+                ).h4.string.strip()
+            )
 
     # show user the links to the credit templates and release, also generate YouTube credits
     print(Fore.RED + "Here is the usage policy and credit templates:" + Style.RESET_ALL)
@@ -117,6 +127,8 @@ for selected_release in range(1, num_releases + 1):
         )
         continue
 
+    if not image_link:
+        breakpoint()
     wget.download(image_link, out=os.path.join(album_name, "cover.png"))
 
     # create credits.txt file with the same content like what is printed into the console above^
@@ -129,19 +141,34 @@ for selected_release in range(1, num_releases + 1):
     f = open(album_name + "/playlist.m3u", "w")
     for i in range(0, len(sound_file_links)):
         artist = (
-            sound_file_artist[i].replace(".", "").replace("!", "").replace(" ", "_")
+            sound_file_artist[i]
+            .replace(".", "")
+            .replace("!", "")
+            .replace(" ", "_")
+            .replace("\u2019", "'")
         )
-        title = sound_file_title[i].replace(".", "").replace("!", "").replace(" ", "_")
+        title = (
+            sound_file_title[i]
+            .replace(".", "")
+            .replace("!", "")
+            .replace(" ", "_")
+            .replace("\u2019", "'")
+        )
 
         filename = f"{artist}-{title}.mp3"
-
+        if not sound_file_links[i]:
+            breakpoint()
         wget.download(sound_file_links[i], out=os.path.join(album_name, filename))
         audiofile = eyed3.load(os.path.join(album_name, filename))
-        audiofile.tag.album = album_name
-        audiofile.tag.artist = sound_file_artist[i]
-        audiofile.tag.title = sound_file_title[i]
+        audiofile.tag.album = album_name.replace("\u2019", "'")
+        audiofile.tag.artist = sound_file_artist[i].replace("\u2019", "'")
+        audiofile.tag.title = sound_file_title[i].replace("\u2019", "'")
         audiofile.tag.track_num = i + 1
-        audiofile.tag.save()
+        try:
+            audiofile.tag.save()
+        except UnicodeEncodeError:
+            breakpoint()
+            # .replace(u"\u2019", "'")
         f.write(filename)
     f.close()
 
