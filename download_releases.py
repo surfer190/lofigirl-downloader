@@ -69,7 +69,7 @@ for selected_release in range(1, num_releases + 1):
     print('- Watch: https://www.youtube.com/c/LofiGirl/search?query='+album_name.replace(' ',''))
     print('- Listen: https://open.spotify.com/search/'+album_name.replace(' ',''))
 
-    album_name_stripped = album_name.replace(' ', '_')
+    album_name_stripped = album_name.replace(' ', '_').replace('.','')
 
     #make a folder with the name of the album and download the cover into it
     album_name = f'downloads/{album_name_stripped}'
@@ -91,7 +91,11 @@ for selected_release in range(1, num_releases + 1):
     #download all songs 1 by 1 into the new folder, access it's metadata and fill album, artist, title and track num tags. Also create a trivial playlist file
     f = open(album_name+'/playlist.m3u','w')
     for i in range(0,len(sound_file_links)):
-        filename = f'{sound_file_artist[i]}-{sound_file_title[i]}.mp3'
+        artist = sound_file_artist[i].replace('.', '').replace('!','')
+        title = sound_file_title[i].replace('.', '').replace('!','')
+        
+        filename = f'{artist}-{title}.mp3'
+        
         wget.download(sound_file_links[i], out=os.path.join(album_name, filename))
         audiofile = eyed3.load(os.path.join(album_name, filename))
         audiofile.tag.album = album_name
