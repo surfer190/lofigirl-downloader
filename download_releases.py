@@ -36,10 +36,10 @@ releases_artists.reverse()
 for i in range (0,len(releases_links)):
     print(Fore.RED + str(i+1) + '. '+Fore.BLUE+releases_names[i]+Style.RESET_ALL+' by '+Fore.GREEN+releases_artists[i])
 print(Style.RESET_ALL)
-selected_release = input('Write number of the release you want to download: ')
 
+num_releases = len(releases_links)
 
-for selected_release in range(1, 326):
+for selected_release in range(1, num_releases + 1):
     #get html file of user selected release
     resp = http.request('GET',releases_links[int(selected_release)-1])
     soup = BeautifulSoup(resp.data, 'html.parser')
@@ -69,8 +69,17 @@ for selected_release in range(1, 326):
     print('- Watch: https://www.youtube.com/c/LofiGirl/search?query='+album_name.replace(' ',''))
     print('- Listen: https://open.spotify.com/search/'+album_name.replace(' ',''))
 
+    album_name_stripped = album_name.replace(' ', '_')
+
     #make a folder with the name of the album and download the cover into it
-    os.makedirs(album_name, exist_ok=True)
+    album_name = f'downloads/{album_name_stripped}'
+    try:
+        os.mkdir(album_name)
+    except FileExistsError as error:
+        print(error)
+        print('Folder exists - moving on...delete the folder and rerun for a fresh download')
+        continue
+
     wget.download(image_link, out=os.path.join(album_name, 'cover.png'))
 
     #create credits.txt file with the same content like what is printed into the console above^
@@ -82,16 +91,16 @@ for selected_release in range(1, 326):
     #download all songs 1 by 1 into the new folder, access it's metadata and fill album, artist, title and track num tags. Also create a trivial playlist file
     f = open(album_name+'/playlist.m3u','w')
     for i in range(0,len(sound_file_links)):
-        wget.download(sound_file_links[i], out=os.path.join(album_name, sound_file_title[i] + '.mp3'))
-        audiofile = eyed3.load(os.path.join(album_name, sound_file_title[i] + '.mp3'))
+        filename = f'{sound_file_artist[i]}-{sound_file_title[i]}.mp3'
+        wget.download(sound_file_links[i], out=os.path.join(album_name, filename))
+        audiofile = eyed3.load(os.path.join(album_name, filename))
         audiofile.tag.album = album_name
         audiofile.tag.artist = sound_file_artist[i]
         audiofile.tag.title = sound_file_title[i]
         audiofile.tag.track_num = i+1
         audiofile.tag.save()
-        f.write(sound_file_title[i]+'.mp3\n')
+        f.write(filename)
     f.close()
-
 
     print()
     print(Fore.RED+'all done'+Style.RESET_ALL)
