@@ -1,0 +1,5 @@
+beautifulsoup4~=4.11.*
+urllib3~=1.26.*
+wget==3.2
+eyed3~=0.9.*
+colorama~=0.4.*
