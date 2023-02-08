@@ -128,8 +128,10 @@ for selected_release in range(1, num_releases + 1):
     # download all songs 1 by 1 into the new folder, access it's metadata and fill album, artist, title and track num tags. Also create a trivial playlist file
     f = open(album_name + "/playlist.m3u", "w")
     for i in range(0, len(sound_file_links)):
-        artist = sound_file_artist[i].replace(".", "").replace("!", "")
-        title = sound_file_title[i].replace(".", "").replace("!", "")
+        artist = (
+            sound_file_artist[i].replace(".", "").replace("!", "").replace(" ", "_")
+        )
+        title = sound_file_title[i].replace(".", "").replace("!", "").replace(" ", "_")
 
         filename = f"{artist}-{title}.mp3"
 
