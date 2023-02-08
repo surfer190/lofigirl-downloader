@@ -13,7 +13,7 @@ Download all lofi girl releases
 
 ### Audio Quality
 
-The bitrate of the music is 128 kbps a.k.a Cut-off at 16 kHz
+The bitrate of the music ranges from 128 kbps (Cut-off at 16 kHz) to 320kbps (Cut-off at 20 kHz)
 
 ### Credit
 

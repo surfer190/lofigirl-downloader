@@ -70,11 +70,16 @@ for selected_release in range(1, num_releases + 1):
     sound_file_title = []
     sound_file_artist = []
     for link in soup.find_all("div", class_="cv_custom_album_play_contents_inner_part"):
-        sound_file_links.append(
-            link.find("div", class_="cv_custom_download_icon_part").get(
-                "data-audio-src"
+        try:
+            sound_file_links.append(
+                link.find("div", class_="cv_custom_download_icon_part").get(
+                    "data-audio-src"
+                )
             )
-        )
+        except AttributeError as error:
+            print(error)
+            print("No data source found...skipping")
+            continue
         sound_file_title.append(
             link.find(
                 "div", class_="cv_custom_custom_content_description"
@@ -146,6 +151,7 @@ for selected_release in range(1, num_releases + 1):
             .replace("!", "")
             .replace(" ", "_")
             .replace("\u2019", "'")
+            .replace("\u012b", "")
         )
         title = (
             sound_file_title[i]
@@ -153,6 +159,7 @@ for selected_release in range(1, num_releases + 1):
             .replace("!", "")
             .replace(" ", "_")
             .replace("\u2019", "'")
+            .replace("\u012b", "")
         )
 
         filename = f"{artist}-{title}.mp3"
@@ -160,13 +167,17 @@ for selected_release in range(1, num_releases + 1):
             breakpoint()
         wget.download(sound_file_links[i], out=os.path.join(album_name, filename))
         audiofile = eyed3.load(os.path.join(album_name, filename))
-        audiofile.tag.album = album_name.replace("\u2019", "'")
-        audiofile.tag.artist = sound_file_artist[i].replace("\u2019", "'")
-        audiofile.tag.title = sound_file_title[i].replace("\u2019", "'")
+        audiofile.tag.album = album_name.replace("\u2019", "'").replace("\u012b", "")
+        audiofile.tag.artist = (
+            sound_file_artist[i].replace("\u2019", "'").replace("\u012b", "")
+        )
+        audiofile.tag.title = (
+            sound_file_title[i].replace("\u2019", "'").replace("\u012b", "")
+        )
         audiofile.tag.track_num = i + 1
         try:
             audiofile.tag.save()
-        except UnicodeEncodeError:
+        except UnicodeEncodeError as error:
             breakpoint()
             # .replace(u"\u2019", "'")
         f.write(filename)
