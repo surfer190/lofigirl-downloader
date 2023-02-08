@@ -10,3 +10,7 @@ Download all lofi girl releases
     pip install -r requirements.txt
     
     python download_releases.py
+
+### Credit
+
+Orignal author: [Deadlibor](https://www.reddit.com/user/Deadlibor/) post on [reddit](https://www.reddit.com/r/LofiGirl/comments/phtdxb/i_made_a_python_script_to_quickly_download_new/)
