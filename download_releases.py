@@ -75,7 +75,7 @@ def manage_info(http):
     return releases
 
 def download_release(http, release, output_dir, translators):
-    print("Fetching Release: {release.name} by {release.artists}")
+    print(f"Fetching Release: {release.name} by {release.artists}")
 
     # get html file of user selected release
     resp = http.request("GET", release.link)
