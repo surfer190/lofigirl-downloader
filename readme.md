@@ -9,7 +9,13 @@ Download all lofi girl releases
     
     pip install -r requirements.txt
     
-    python download_releases.py
+    python download.py
+
+### Update CSV
+
+If new releases are made one can update the csv with:
+
+    python update_releases.py
 
 ### Audio Quality
 
@@ -21,6 +27,10 @@ At February 2023:
 
 * Size: 12GB
 * Number of Albums: 324
+
+At August 2023:
+
+* Number of Albums: 381
 
 ### Credit
 

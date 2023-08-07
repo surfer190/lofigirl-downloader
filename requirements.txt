@@ -1,5 +1,2 @@
-beautifulsoup4~=4.11.2
-urllib3~=1.26.14
-wget==3.2
-eyed3~=0.9.7
-colorama~=0.4.6
+beautifulsoup4==4.12.2
+httpx==0.24.1
