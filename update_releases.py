@@ -12,22 +12,20 @@ import httpx
 RELEASES_URL = "https://lofigirl.com/releases/"
 
 headers = {
-    'user-agent': 'lofigirl-downloader/0.2.0',
-    'content-type': 'application/x-www-form-urlencoded'
+    "user-agent": "lofigirl-downloader/0.2.0",
+    "content-type": "application/x-www-form-urlencoded",
 }
 
-client = httpx.Client(
-    headers=headers,
-    timeout=30.0
-)
+client = httpx.Client(headers=headers, timeout=30.0)
 
 page = 1
 
 release_links = set()
 
+
 def get_release_links():
     while True:
-        
+
         response = client.post(
             RELEASES_URL,
             data={
@@ -47,81 +45,79 @@ def get_release_links():
                 "page_settings[queried_id]": "17370|WP_Post",
                 "page_settings[element_id]": "4b7c1a2",
                 "page_settings[page]": f"{page}",
-                "listing_type": "elementor"
-            }
+                "listing_type": "elementor",
+            },
         )
 
-        html_data = response.json().get('data').get('html')
+        html_data = response.json().get("data").get("html")
 
-        soup = BeautifulSoup(html_data, 'html.parser')
+        soup = BeautifulSoup(html_data, "html.parser")
 
-        links = soup.find_all('a', {'class': 'jet-engine-listing-overlay-link'})
+        links = soup.find_all("a", {"class": "jet-engine-listing-overlay-link"})
 
         if links:
             for link in links:
-                release_links.add(link.get('href'))
+                release_links.add(link.get("href"))
         else:
-            print(f'No results for page: {page}')
+            print(f"No results for page: {page}")
             break
-        
-        print(f'Page {page}: done')
+
+        print(f"Page {page}: done")
         page = page + 1
 
+
 def get_release_info():
-    
+
     release_links = sorted(list(release_links))
-    
+
     all_info = []
-    
+
     for link in release_links:
         print(link)
         response = client.get(link)
-        
-        artists = ''
-        title = ''
+
+        artists = ""
+        title = ""
 
         if response.status_code == httpx.codes.OK:
-            soup = BeautifulSoup(response.content, 'html.parser')
-            
-            title_div = soup.find('div', {'data-id': '29d3c6b'})
+            soup = BeautifulSoup(response.content, "html.parser")
+
+            title_div = soup.find("div", {"data-id": "29d3c6b"})
             if title_div:
                 title = title_div.text
                 title = title.strip()
-                title = title.replace('\n', '')
-            
-            artists_div = soup.find('div', {'data-listing-id': '15303'})
+                title = title.replace("\n", "")
+
+            artists_div = soup.find("div", {"data-listing-id": "15303"})
             if artists_div:
                 artists = artists_div.text
                 artists = artists.strip()
-                artists = artists.replace('\n', '')
-            
-            download = soup.find('div', {'data-id': '311b599'})
-            if download:
-                download_link = download.find('a').get('href')
-            else:
-                print('NO DOWNLOAD LINK', artists, '-', title)
-                continue
-            
-            print(artists, '-', title)
-            all_info.append({
-                'artists': artists,
-                'title': title,
-                'link': download_link
-            })
-        else:
-            print(f'Problem: {link}')
+                artists = artists.replace("\n", "")
 
-    with open('releases.csv', 'w', newline='') as csv_file:
-        fieldnames = ['artists', 'title', 'link']
+            download = soup.find("div", {"data-id": "311b599"})
+            if download:
+                download_link = download.find("a").get("href")
+            else:
+                print("NO DOWNLOAD LINK", artists, "-", title)
+                continue
+
+            print(artists, "-", title)
+            all_info.append({"artists": artists, "title": title, "link": download_link})
+        else:
+            print(f"Problem: {link}")
+
+    with open("releases.csv", "w", newline="") as csv_file:
+        fieldnames = ["artists", "title", "link"]
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-        
+
         writer.writeheader()
-        
+
         for info in all_info:
             writer.writerow(info)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
 
     get_release_links()
-    
+
     get_release_info()
