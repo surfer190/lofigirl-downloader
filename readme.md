@@ -30,7 +30,8 @@ At February 2023:
 
 At August 2023:
 
-* Number of Albums: 381
+* Size: 12.18 GB (zipped)
+* Number of Albums: 378
 
 ### Credit
 
