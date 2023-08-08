@@ -1,9 +1,11 @@
 """
 1. Give the user a list of releases to download
 2. User selects
+3. By default download all
 """
 import csv
 import pathlib
+import sys
 
 import httpx
 
@@ -22,6 +24,15 @@ def download_file(file_href):
     #     for data in reader.iter_bytes():
     #         print(data)
     
+    file_name_with_extension = file_href.split('/')[-1]
+    
+    file_path = DOWNLOAD_DIR / file_name_with_extension
+    
+    # check if zip already exists
+    if pathlib.Path(file_path).is_file():
+        print(f'File exists: {file_path}')
+        return
+    
     file_response = client.get(file_href)
     
     if file_response.status_code == httpx.codes.OK:
@@ -30,21 +41,13 @@ def download_file(file_href):
         content_disposition = file_response.headers.get('content-disposition')
         print(content_disposition)
         
-        if content_type == 'application/pdf':
-            extension = 'pdf'
-        elif content_type == 'image/png':
-            extension = 'png'
-        elif content_type == 'image/jpeg':
-            extension = 'jpg'
-        elif content_type == 'application/zip':
+        if content_type == 'application/zip':
             extension = 'zip'
         else:
             print(f"Unexpected file extension '{content_type}' for {content_disposition}")
-            return
+            sys.exit(1)
         
-        file_name_with_extension = file_href.split('/')[-1]
-        
-        with open(DOWNLOAD_DIR / file_name_with_extension, 'wb') as current_file:
+        with open(file_path, 'wb') as current_file:
             current_file.write(file_response.content)
             print(f'Completed: {file_href}')
 
