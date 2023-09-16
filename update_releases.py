@@ -16,16 +16,15 @@ headers = {
     "content-type": "application/x-www-form-urlencoded",
 }
 
-client = httpx.Client(headers=headers, timeout=30.0)
-
-page = 1
+client = httpx.Client(headers=headers, timeout=120.0)
 
 release_links = set()
 
-
 def get_release_links():
-    while True:
 
+    page = 1
+
+    while True:
         response = client.post(
             RELEASES_URL,
             data={
@@ -68,11 +67,12 @@ def get_release_links():
 
 def get_release_info():
 
-    release_links = sorted(list(release_links))
+    # make a variable for function scope - to stop UnboundLocalError
+    current_release_links = sorted(list(release_links))
 
     all_info = []
 
-    for link in release_links:
+    for link in current_release_links:
         print(link)
         response = client.get(link)
 
@@ -106,7 +106,7 @@ def get_release_info():
         else:
             print(f"Problem: {link}")
 
-    with open("releases.csv", "w", newline="") as csv_file:
+    with open("releases.csv", "w", newline="", encoding='utf-8') as csv_file:
         fieldnames = ["artists", "title", "link"]
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
 
