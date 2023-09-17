@@ -11,6 +11,10 @@ Download all lofi girl releases
     
     python download.py
 
+This will download the zip files into the downloads folder.
+
+The extracted files lack ID3 tagging. One can use [picard](https://github.com/metabrainz/picard) to assist with tagging.
+
 ### Update CSV
 
 If new releases are made one can update the csv with:
