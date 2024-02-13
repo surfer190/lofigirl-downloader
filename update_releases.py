@@ -101,7 +101,11 @@ def get_release_info():
                 print("NO DOWNLOAD LINK", artists, "-", title)
                 continue
 
-            print(artists, "-", title)
+            try:
+                print(artists, "-", title)
+            except UnicodeEncodeError as ex:
+                print(ex)
+            
             all_info.append({"artists": artists, "title": title, "link": download_link})
         else:
             print(f"Problem: {link}")

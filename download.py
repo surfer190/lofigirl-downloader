@@ -11,7 +11,10 @@ import httpx
 
 DOWNLOAD_DIR = pathlib.Path(__file__).parent / "downloads"
 
-client = httpx.Client(headers={"user-agent": "lofigirl-downloader/0.2.0"})
+client = httpx.Client(
+    headers={"user-agent": "lofigirl-downloader/0.2.0"},
+    timeout=60.0
+)
 
 
 def download_file(file_href):
