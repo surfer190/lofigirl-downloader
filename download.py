@@ -12,8 +12,14 @@ import httpx
 DOWNLOAD_DIR = pathlib.Path(__file__).parent / "downloads"
 
 client = httpx.Client(
-    headers={"user-agent": "lofigirl-downloader/0.2.0"},
-    timeout=60.0
+    headers={"user-agent": "lofigirl-downloader/0.3.0"},
+    timeout=60.0,
+    verify=False,
+    http2=True,
+    limits=httpx.Limits(
+        keepalive_expiry=100,
+    ),
+    follow_redirects=True
 )
 
 

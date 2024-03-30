@@ -5,50 +5,108 @@
 4. Store it in a csv file in the repo
 """
 import csv
+import logging
 
 from bs4 import BeautifulSoup
 import httpx
 
-RELEASES_URL = "https://lofigirl.com/releases/"
+logging.basicConfig(level=logging.INFO)
+
+logger = logging.getLogger(__name__)
+
+RELEASES_URL = "https://lofigirl.com/wp-admin/admin-ajax.php"
 
 headers = {
-    "user-agent": "lofigirl-downloader/0.2.0",
+    "user-agent": "lofigirl-downloader/0.3.0",
     "content-type": "application/x-www-form-urlencoded",
 }
 
-client = httpx.Client(headers=headers, timeout=120.0)
+client = httpx.Client(
+    headers=headers,
+    timeout=120.0,
+    verify=False,
+    http2=True,
+    limits=httpx.Limits(
+        keepalive_expiry=100,
+    ),
+    follow_redirects=True
+)
 
 release_links = set()
 
 def get_release_links():
 
-    page = 1
+    page = 0
 
     while True:
-        response = client.post(
-            RELEASES_URL,
-            data={
-                "action": "jet_engine_ajax",
-                "handler": "get_listing",
-                "query[post_status]": "publish",
-                "query[found_posts]": "383",
-                "query[max_num_pages]": "39",
-                "query[post_type]": "releases",
-                "query[orderby]": "",
-                "query[order]": "DESC",
-                "query[paged]": f"{page}",
-                "query[posts_per_page]": "50",
-                "query[suppress_filters]": "false",
-                "query[jet_smart_filters]": "jet-engine/all-releases",
-                "page_settings[post_id]": "423",
-                "page_settings[queried_id]": "17370|WP_Post",
-                "page_settings[element_id]": "4b7c1a2",
-                "page_settings[page]": f"{page}",
-                "listing_type": "elementor",
-            },
-        )
+        try:
+            response = client.post(
+                RELEASES_URL,
+                data={
+                    "action": "jet_smart_filters",
+                    "provider": "jet-engine/all-releases",
+                    "settings[lisitng_id]": "344",
+                    "settings[columns]": "2",
+                    "settings[columns_tablet]": "2",
+                    "settings[columns_mobile]": "1",
+                    "settings[column_min_width]": "240",
+                    "settings[column_min_width_tablet]": "",
+                    "settings[column_min_width_mobile]": "",
+                    "settings[inline_columns_css]": "false",
+                    "settings[is_archive_template]": "",
+                    "settings[post_status][]": "publish",
+                    "settings[use_random_posts_num]": "",
+                    "settings[posts_num]": "8",
+                    "settings[max_posts_num]": "9",
+                    "settings[not_found_message]": "No+releases+was+found,+please+retry+with+other+filters+:c",
+                    "settings[is_masonry]": "",
+                    "settings[equal_columns_height]": "yes",
+                    "settings[use_load_more]": "",
+                    "settings[load_more_id]": "",
+                    "settings[load_more_type]": "scroll",
+                    "settings[load_more_offset][unit]": "px",
+                    "settings[load_more_offset][size]": "0",
+                    "settings[loader_text]": "Loading+more+artists",
+                    "settings[loader_spinner]": "yes",
+                    "settings[use_custom_post_types]": "",
+                    "settings[custom_post_types][]": "releases",
+                    "settings[hide_widget_if]": "",
+                    "settings[carousel_enabled]": "",
+                    "settings[slides_to_scroll]": "1",
+                    "settings[arrows]": "true",
+                    "settings[arrow_icon]": "fa+fa-angle-left",
+                    "settings[dots]": "",
+                    "settings[autoplay]": "true",
+                    "settings[pause_on_hover]": "true",
+                    "settings[autoplay_speed]": "5000",
+                    "settings[infinite]": "true",
+                    "settings[center_mode]": "",
+                    "settings[effect]": "slide",
+                    "settings[speed]": "500",
+                    "settings[inject_alternative_items]": "",
+                    "settings[scroll_slider_enabled]": "",
+                    "settings[scroll_slider_on][]": [
+                        "desktop",
+                        "tablet",
+                        "mobile"
+                    ],
+                    "settings[custom_query]": "yes",
+                    "settings[custom_query_id]": "27",
+                    "settings[_element_id]": "all-releases",
+                    "props[found_posts]": "409",
+                    "props[max_num_pages]": "41",
+                    "props[page]": f"{page}",
+                    "props[query_type]": "posts",
+                    "props[query_id]": "27",
+                    "paged": f"{page + 1}"
+                },
+            )
+        except httpx.HTTPError as error:
+            logger.exception(error)
+            logger.warning('Issue getting page: %s...skipping', page)
+            continue
 
-        html_data = response.json().get("data").get("html")
+        html_data = response.json().get("content")
 
         soup = BeautifulSoup(html_data, "html.parser")
 
@@ -58,10 +116,10 @@ def get_release_links():
             for link in links:
                 release_links.add(link.get("href"))
         else:
-            print(f"No results for page: {page}")
+            logger.info("No results for page: %s", page)
             break
 
-        print(f"Page {page}: done")
+        logger.info(f"Page %s: done", page)
         page = page + 1
 
 
@@ -73,8 +131,14 @@ def get_release_info():
     all_info = []
 
     for link in current_release_links:
-        print(link)
-        response = client.get(link)
+        logger.info(link)
+
+        try:
+            response = client.get(link)
+        except httpx.HTTPError as error:
+            logger.info(error)
+            logger.warning("Skipping: %s", link)
+            continue
 
         artists = ""
         title = ""
@@ -98,17 +162,17 @@ def get_release_info():
             if download:
                 download_link = download.find("a").get("href")
             else:
-                print("NO DOWNLOAD LINK", artists, "-", title)
+                logger.info("NO DOWNLOAD LINK %s - %s", artists, title)
                 continue
 
             try:
-                print(artists, "-", title)
+                logger.info("%s - %s", artists, title)
             except UnicodeEncodeError as ex:
-                print(ex)
+                logger.info(ex)
             
             all_info.append({"artists": artists, "title": title, "link": download_link})
         else:
-            print(f"Problem: {link}")
+            logger.error("Problem: %s", link)
 
     with open("releases.csv", "w", newline="", encoding='utf-8') as csv_file:
         fieldnames = ["artists", "title", "link"]
